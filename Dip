@@ -1,0 +1,200 @@
+EXPERIMENT 1 — Basic Image Operations
+clc; clear; close all;
+
+f = imread('/MATLAB Drive/sampleimage.jpg');
+g = imread('/MATLAB Drive/sampleimage.jpg');
+
+f = im2double(f);
+g = im2double(g);
+
+add_img = imadd(f,g);
+sub_img = imsubtract(f,g);
+mul_img = immultiply(f,g);
+div_img = imdivide(f,g);
+
+figure;
+subplot(2,2,1), imshow(add_img), title('Add');
+subplot(2,2,2), imshow(sub_img), title('Sub');
+subplot(2,2,3), imshow(mul_img), title('Mul');
+subplot(2,2,4), imshow(div_img), title('Div');
+
+EXPERIMENT 2 — Histogram Equalization
+clc; clear; close all;
+
+I = imread('/MATLAB Drive/sampleimage.jpg');
+if size(I,3)==3
+    I = rgb2gray(I);
+end
+
+subplot(2,2,1), imshow(I), title('Original');
+subplot(2,2,2), imhist(I), title('Histogram');
+
+I_eq = histeq(I);
+
+subplot(2,2,3), imshow(I_eq), title('Equalized');
+subplot(2,2,4), imhist(I_eq), title('Histogram EQ');
+
+EXPERIMENT 3 — Image Filtering
+clc; clear; close all;
+
+img = imread('/MATLAB Drive/sampleimage.jpg');
+img = im2double(rgb2gray(img));
+
+lpf = ones(3,3)/9;
+hpf = [0 -1 0; -1 4 -1; 0 -1 0];
+
+lpf_img = imfilter(img,lpf);
+hpf_img = imfilter(img,hpf);
+
+median_img = medfilt2(img,[3 3]);
+
+blur = imfilter(img,lpf);
+high_boost = 1.5*img - blur;
+
+figure;
+subplot(2,3,1), imshow(img), title('Original');
+subplot(2,3,2), imshow(lpf_img), title('LPF');
+subplot(2,3,3), imshow(hpf_img,[]), title('HPF');
+subplot(2,3,4), imshow(median_img), title('Median');
+subplot(2,3,5), imshow(high_boost), title('High Boost');
+
+EXPERIMENT 4 — Frequency Domain Filtering
+clc; clear; close all;
+
+img = im2double(rgb2gray(imread('/MATLAB Drive/sampleimage.jpg')));
+[M,N] = size(img);
+
+F = fftshift(fft2(img));
+
+[u,v] = meshgrid(1:N,1:M);
+D = sqrt((u-N/2).^2 + (v-M/2).^2);
+
+D0 = 30; n = 2;
+
+ILPF = double(D<=D0);
+IHPF = double(D>D0);
+
+BLPF = 1./(1+(D./D0).^(2*n));
+BHPF = 1./(1+(D0./D).^(2*n));
+BHPF(D==0)=0;
+
+img1 = real(ifft2(ifftshift(ILPF.*F)));
+img2 = real(ifft2(ifftshift(IHPF.*F)));
+img3 = real(ifft2(ifftshift(BLPF.*F)));
+img4 = real(ifft2(ifftshift(BHPF.*F)));
+
+figure;
+subplot(2,2,1), imshow(img1,[]), title('ILPF');
+subplot(2,2,2), imshow(img2,[]), title('IHPF');
+subplot(2,2,3), imshow(img3,[]), title('BLPF');
+subplot(2,2,4), imshow(img4,[]), title('BHPF');
+
+EXPERIMENT 5 — Thresholding + Edge Detection
+clc; clear; close all;
+
+I = imread('/MATLAB Drive/sampleimage.jpg');
+I = im2double(rgb2gray(I));
+
+BW1 = imbinarize(I,0.5);
+BW2 = imbinarize(I,graythresh(I));
+BW3 = imbinarize(I,adaptthresh(I));
+
+figure;
+subplot(1,3,1), imshow(BW1), title('Manual');
+subplot(1,3,2), imshow(BW2), title('Otsu');
+subplot(1,3,3), imshow(BW3), title('Adaptive');
+
+Gx = [-1 0 1;-2 0 2;-1 0 1];
+Gy = Gx';
+
+edge_img = sqrt(conv2(I,Gx,'same').^2 + conv2(I,Gy,'same').^2);
+
+figure;
+imshow(edge_img,[]), title('Sobel Edge');
+
+EXPERIMENT 6 — Noise & Restoration
+clc; clear; close all;
+
+I = im2double(rgb2gray(imread('/MATLAB Drive/sampleimage.jpg')));
+
+gn = imnoise(I,'gaussian');
+sp = imnoise(I,'salt & pepper');
+sn = imnoise(I,'speckle');
+
+mf = medfilt2(sp,[3 3]);
+wf = wiener2(gn,[5 5]);
+af = imfilter(gn,fspecial('average',[3 3]));
+
+figure;
+subplot(3,2,1), imshow(gn), title('Gaussian');
+subplot(3,2,2), imshow(wf), title('Wiener');
+subplot(3,2,3), imshow(sp), title('Salt & Pepper');
+subplot(3,2,4), imshow(mf), title('Median');
+subplot(3,2,5), imshow(sn), title('Speckle');
+subplot(3,2,6), imshow(af), title('Average');
+
+EXPERIMENT 7 — DCT Compression
+clc; clear; close all;
+
+img = im2double(rgb2gray(imread('/MATLAB Drive/sampleimage.jpg')));
+
+D = dct2(img);
+
+T = 0.02*max(abs(D(:)));
+D(abs(D)<T)=0;
+
+rec = idct2(D);
+
+figure;
+subplot(1,3,1), imshow(img), title('Original');
+subplot(1,3,2), imshow(log(abs(D)+1),[]), title('DCT');
+subplot(1,3,3), imshow(rec), title('Reconstructed');
+
+EXPERIMENT 8 — Edge Detection Comparison
+clc; clear; close all;
+
+I = im2double(rgb2gray(imread('/MATLAB Drive/sampleimage.jpg')));
+
+bw1 = edge(I,'Sobel');
+bw2 = edge(I,'Prewitt');
+bw3 = edge(I,'Roberts');
+
+figure;
+subplot(1,3,1), imshow(bw1), title('Sobel');
+subplot(1,3,2), imshow(bw2), title('Prewitt');
+subplot(1,3,3), imshow(bw3), title('Roberts');
+
+EXPERIMENT 9 — Huffman Coding
+clc; clear; close all;
+
+symbols = 1:8;
+prob = [0.22 0.2 0.18 0.15 0.1 0.08 0.05 0.02];
+
+dict = huffmandict(symbols,prob);
+
+msg = randsrc(50,1,[symbols;prob]);
+
+enc = huffmanenco(msg,dict);
+dec = huffmandeco(enc,dict);
+
+disp(enc');
+disp(dec');
+
+EXPERIMENT 10 — Morphological Operations
+clc; clear; close all;
+
+img = im2gray(imread('/MATLAB Drive/sampleimage.jpg'));
+bw = imbinarize(img);
+
+se = strel('square',3);
+
+dil = imdilate(bw,se);
+ero = imerode(bw,se);
+opn = imopen(bw,se);
+cls = imclose(bw,se);
+
+figure;
+subplot(2,2,1), imshow(dil), title('Dilate');
+subplot(2,2,2), imshow(ero), title('Erode');
+subplot(2,2,3), imshow(opn), title('Open');
+subplot(2,2,4), imshow(cls), title('Close');
